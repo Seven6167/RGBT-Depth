@@ -1,0 +1,16 @@
+sample_id,rgb,tir,gt
+test_1197,RGB/test_1197.jpg,TIR/test_1197.jpg,GT/test_1197.json
+test_1255,RGB/test_1255.jpg,TIR/test_1255.jpg,GT/test_1255.json
+test_1381,RGB/test_1381.jpg,TIR/test_1381.jpg,GT/test_1381.json
+test_1645,RGB/test_1645.jpg,TIR/test_1645.jpg,GT/test_1645.json
+test_1666,RGB/test_1666.jpg,TIR/test_1666.jpg,GT/test_1666.json
+test_1668,RGB/test_1668.jpg,TIR/test_1668.jpg,GT/test_1668.json
+test_1692,RGB/test_1692.jpg,TIR/test_1692.jpg,GT/test_1692.json
+test_1708,RGB/test_1708.jpg,TIR/test_1708.jpg,GT/test_1708.json
+test_1747,RGB/test_1747.jpg,TIR/test_1747.jpg,GT/test_1747.json
+test_1775,RGB/test_1775.jpg,TIR/test_1775.jpg,GT/test_1775.json
+test_1917,RGB/test_1917.jpg,TIR/test_1917.jpg,GT/test_1917.json
+test_1920,RGB/test_1920.jpg,TIR/test_1920.jpg,GT/test_1920.json
+test_1922,RGB/test_1922.jpg,TIR/test_1922.jpg,GT/test_1922.json
+test_2141,RGB/test_2141.jpg,TIR/test_2141.jpg,GT/test_2141.json
+test_2282,RGB/test_2282.jpg,TIR/test_2282.jpg,GT/test_2282.json

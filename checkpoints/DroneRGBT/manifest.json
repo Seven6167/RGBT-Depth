@@ -1,0 +1,42 @@
+{
+  "format": "tce-inference-only-CANDIDATE-v1",
+  "dataset": "DroneRGBT",
+  "original_shared_sha256": "e810e9e71e1049624c9755bd7fa85625dba97424bbc5f02b0e85f182db5baf30",
+  "source_manifest_sha256": "f88ccfd97183262f5e68abf0bb4f01506186ada7483a7014baf6cd66b2d5cfe9",
+  "shared_network": {
+    "filename": "best.pt",
+    "size_bytes": 55967356,
+    "sha256": "20e984034e915a7297f68fd1ca27047db284f6187eea1e8a235ca8242e0f099c",
+    "state_dict_key": "model",
+    "parts": [
+      {
+        "filename": "shared_network/best.pt.part001",
+        "size_bytes": 24000000,
+        "sha256": "605398feb1793e7861d9c803ccc3703597fc1dccd0f8d83802ef525b3bb60b33"
+      },
+      {
+        "filename": "shared_network/best.pt.part002",
+        "size_bytes": 24000000,
+        "sha256": "94898660339a65ba956e64717b8c6e5a341bec276f3dbde29a24466b12324a56"
+      },
+      {
+        "filename": "shared_network/best.pt.part003",
+        "size_bytes": 7967356,
+        "sha256": "2ef6ef95c84aba71e374c640dd6dfba822613782eb30de06210c41154e07cb84"
+      }
+    ]
+  },
+  "depth_controller": {
+    "filename": "depth_controller.pt",
+    "size_bytes": 205680,
+    "sha256": "1d68f21d210ff8add9cae3188c76a1604309fd94d83e7eb12509a28d0b74cdf5",
+    "state_dict_key": "router"
+  },
+  "validation": {
+    "all_source_parameters_and_buffers_equal": true,
+    "exported_state_dict_exact_reload": true,
+    "original_controller_sha256_unchanged": true,
+    "five_mode_gpu_prediction_parity": "NOT_RUN",
+    "compatible_with_original_checkpoint_py": false
+  }
+}

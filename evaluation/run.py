@@ -19,6 +19,8 @@ from .metrics import DENSITY_HW, aggregate, game_per_image, ground_truth_map
 EXPECTED_SAMPLES = {
     ("DroneRGBT", "official-test"): 1800,
     ("RGBT-CC", "official-test"): 800,
+    ("DroneRGBT", "examples-15"): 15,
+    ("RGBT-CC", "examples-15"): 15,
     ("DroneRGBT", "examples-50"): 50,
     ("RGBT-CC", "examples-50"): 50,
 }
@@ -188,7 +190,7 @@ def build_parser():
     parser.add_argument("--dataset-root", type=Path, required=True)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--official-membership", type=Path)
-    parser.add_argument("--scope", choices=("official-test", "examples-50"), required=True)
+    parser.add_argument("--scope", choices=("official-test", "examples-15", "examples-50"), required=True)
     parser.add_argument("--mode", choices=("all", "fixed", "adaptive"), default="all")
     parser.add_argument("--depth", type=int, choices=(1, 2, 3, 4))
     parser.add_argument("--checkpoints-root", type=Path, default=Path("checkpoints"))

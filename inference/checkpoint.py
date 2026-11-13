@@ -249,6 +249,30 @@ def _checkpoint_manifest(root: Path, dataset: str) -> tuple[Path, dict]:
     directory = directory.resolve(strict=True)
     manifest_path = _safe_file(directory, "manifest.json")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("format") == "tce-inference-only-CANDIDATE-v1":
+        # Derived from the verified frozen checkpoint, with tensor values unchanged.
+        pinned = CHECKPOINT_IDENTITIES[dataset]
+        shared = manifest.get("shared_network")
+        controller = manifest.get("depth_controller")
+        if (manifest.get("dataset") != dataset
+                or manifest.get("original_shared_sha256") != pinned["shared_network"]["sha256"]
+                or not isinstance(shared, dict) or not isinstance(controller, dict)):
+            raise RuntimeError(f"{dataset} minimal checkpoint provenance mismatch")
+        for key, value in pinned["depth_controller"].items():
+            if controller.get(key) != value:
+                raise RuntimeError(f"{dataset} minimal checkpoint controller identity mismatch: {key}")
+        if (shared.get("filename") != "best.pt" or shared.get("state_dict_key") != "model"
+                or not isinstance(shared.get("parts"), list)
+                or len(shared["parts"]) != 3):
+            raise RuntimeError(f"{dataset} minimal checkpoint shard format mismatch")
+        valid = manifest.get("validation") or {}
+        if (valid.get("all_source_parameters_and_buffers_equal") is not True
+                or valid.get("exported_state_dict_exact_reload") is not True
+                or valid.get("original_controller_sha256_unchanged") is not True):
+            raise RuntimeError(f"{dataset} minimal export verification missing")
+        if not isinstance(manifest.get("source_manifest_sha256"), str):
+            raise RuntimeError(f"{dataset} original manifest provenance missing")
+        return directory, manifest
     if (manifest.get("format") != MANIFEST_FORMAT or manifest.get("version") != 1
             or manifest.get("dataset") != dataset):
         raise RuntimeError(f"{dataset} checkpoint manifest identity mismatch")
@@ -403,8 +427,63 @@ def _verified_drone_object(path: Path, spec: dict, retained_keys: frozenset[str]
     return value
 
 
+def _load_minimal_from_manifest(checkpoint_dir: Path, manifest: dict):
+    """Safely load inference-only FP32 states and original frozen controller."""
+    import torch
+
+    dataset = manifest["dataset"]
+    shared_spec = manifest["shared_network"]
+    controller_spec = manifest["depth_controller"]
+    with _verified_checkpoint_path(
+        checkpoint_dir, shared_spec, f"{dataset} inference-only shared network"
+    ) as shared_path:
+        shared = torch.load(shared_path, map_location="cpu", weights_only=True)
+    if (not isinstance(shared, dict) or set(shared.keys()) != {"model"}
+            or not isinstance(shared["model"], dict)):
+        raise RuntimeError(f"{dataset} invalid inference-only checkpoint payload")
+    if dataset == "DroneRGBT":
+        with _verified_checkpoint_path(
+            checkpoint_dir, controller_spec, "DroneRGBT Fusion Depth Controller"
+        ) as controller_path:
+            controller = _verified_drone_object(
+                controller_path, controller_spec,
+                frozenset({"router", "mode", "cost_weight"}),
+            )
+        if (controller.get("mode") != "full"
+                or float(controller.get("cost_weight", -999)) != 0.0):
+            raise RuntimeError("DroneRGBT controller frozen metadata mismatch")
+        router_state = controller.get("router")
+    elif dataset == "RGBT-CC":
+        with _verified_checkpoint_path(
+            checkpoint_dir, controller_spec, "RGBT-CC Fusion Depth Controller"
+        ) as controller_path:
+            controller = _safe_weights_only_load(torch, controller_path)
+        if not isinstance(controller, dict):
+            raise RuntimeError("RGBT-CC frozen controller metadata missing")
+        provenance = controller.get("protocol") or {}
+        if (provenance.get("teacher_sha256") != RGBTCC_TEACHER_SHA256
+                or provenance.get("student_sha256") != manifest["original_shared_sha256"]):
+            raise RuntimeError("RGBT-CC controller original provenance mismatch")
+        router_state = controller.get("router_state")
+    else:
+        raise ValueError(f"Unsupported dataset: {dataset}")
+
+    model = _build_model()
+    _strict_load(model, shared["model"], f"{dataset} minimal shared network")
+    _strict_load(model.router, router_state, f"{dataset} frozen Fusion Depth Controller")
+    return model, {
+        "protocol": f"{dataset} inference-only FP32 checkpoint, source-verified",
+        "checkpoint_sha256": {
+            "shared": shared_spec["sha256"], "controller": controller_spec["sha256"]
+        },
+        "original_shared_sha256": manifest["original_shared_sha256"],
+    }
+
+
 def _load_drone(root: Path):
     checkpoint_dir, manifest = _checkpoint_manifest(root, "DroneRGBT")
+    if manifest["format"] == "tce-inference-only-CANDIDATE-v1":
+        return _load_minimal_from_manifest(checkpoint_dir, manifest)
     shared_spec, controller_spec = manifest["shared_network"], manifest["depth_controller"]
     with _verified_checkpoint_path(
         checkpoint_dir, shared_spec, "DroneRGBT shared network"
@@ -439,6 +518,8 @@ def _load_rgbtcc(root: Path):
     import torch
 
     checkpoint_dir, manifest = _checkpoint_manifest(root, "RGBT-CC")
+    if manifest["format"] == "tce-inference-only-CANDIDATE-v1":
+        return _load_minimal_from_manifest(checkpoint_dir, manifest)
     shared_spec, controller_spec = manifest["shared_network"], manifest["depth_controller"]
     with _verified_checkpoint_path(
         checkpoint_dir, shared_spec, "RGBT-CC shared network"

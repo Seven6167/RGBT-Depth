@@ -1,0 +1,14 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated outputs
+outputs/
+*.log
+
+# Temporary files
+.ipynb_checkpoints/
+.DS_Store
+*.zip
+*.tar.gz
